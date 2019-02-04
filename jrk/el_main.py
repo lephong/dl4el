@@ -8,6 +8,7 @@ import random
 import pickle
 import os.path
 import numpy as np
+import json
 import jrk.el_hyperparams as hp
 
 args = hp.parser.parse_args()
@@ -114,21 +115,50 @@ dataset = NYT_RCV1(data_path,
 
 
 # create model
-print('create model')
-model = EL(config={
-    'type': args.enc_type,
-    'lstm_hiddim': args.lstm_hiddim,
-    'n_filters': args.n_filters,
-    'filter_sizes': (3, 5, 7),  # each number has to be odd
-    'word_embs': word_embs,
-    'pos_embdim': args.pos_embdim,
-    'type_embdim': args.type_embdim,
-    'ent_embdim': args.ent_embdim,
-    'dropout': args.dropout,
-    'en_dim': args.en_dim,
-    'n_types': n_types,
-    'n_rels': len(relId)
-})
+if args.mode == 'train':
+    print('create model')
+    model = EL(config={
+        'type': args.enc_type,
+        'lstm_hiddim': args.lstm_hiddim,
+        'n_filters': args.n_filters,
+        'filter_sizes': (3, 5, 7),  # each number has to be odd
+        'word_embs': word_embs,
+        'pos_embdim': args.pos_embdim,
+        'type_embdim': args.type_embdim,
+        'ent_embdim': args.ent_embdim,
+        'dropout': args.dropout,
+        'en_dim': args.en_dim,
+        'n_types': n_types,
+        'n_rels': len(relId),
+        'kl_coef': args.kl_coef,
+        'noise_prior': args.noise_prior,
+        'margin': args.margin,
+    })
+elif args.mode == 'eval':
+    print('load model')
+    with open(args.model_path + '.config', 'r') as f:
+        config = json.load(f)
+    print(config)
+
+    model = EL(config={
+        'type': config['type'],
+        'lstm_hiddim': config['lstm_hiddim'],
+        'n_filters': config['n_filters'],
+        'filter_sizes': (3, 5, 7),  # each number has to be odd
+        'word_embs': word_embs,
+        'pos_embdim': config['pos_embdim'],
+        'type_embdim': config['type_embdim'],
+        'ent_embdim': args.ent_embdim,
+        'dropout': config['dropout'],
+        'en_dim': config['en_dim'],
+        'n_types': config['n_types'],
+        'n_rels': config['n_rels'],
+        'kl_coef': config['kl_coef'],
+        'noise_prior': config['noise_prior'],
+        'margin': config['margin'],
+    })
+    model.load_state_dict(torch.load(args.model_path + '.state_dict'))
+
 model.cuda()
 
 
@@ -214,6 +244,7 @@ def test(data=None, noise_threshold=args.noise_threshold):
 
     print('ner')
     print(ner_acc)
+    return prec, rec, f1
 
 
 # for training
@@ -221,6 +252,8 @@ def train():
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = optim.Adam(params, lr=args.lr)
     data = dataset.train
+
+    best_scores = {'prec': -1, 'rec': -1, 'f1': -1}
 
     if args.kl_coef > 0:
         print('*** dev ***')
@@ -246,17 +279,30 @@ def train():
         while True:
             if start >= len(data):
                 print('%.6f\t\t\t\t\t' % (total_loss / len(data)))
+                save = False
                 if args.kl_coef > 0:
                     print('*** dev ***')
-                    test(dataset.dev)
+                    prec, rec, f1 = test(dataset.dev)
                     print('*** test ***')
                     test(dataset.test)
 
+                    if best_scores['f1'] <= f1:
+                        best_scores = {'prec': prec, 'rec': rec, 'f1': f1}
+                        save = True
+
                 print('===== noise_threshold=0 ====')
                 print('*** dev ***')
-                test(dataset.dev, noise_threshold=1)
+                prec, rec, f1 = test(dataset.dev, noise_threshold=1)
                 print('*** test ***')
                 test(dataset.test, noise_threshold=1)
+
+                if args.kl_coef == 0 and best_scores['f1'] <= f1:
+                    best_scores = {'prec': prec, 'rec': rec, 'f1': f1}
+                    save = True
+
+                if save:
+                    print('save model to', args.model_path)
+                    model.save(args.model_path)
 
                 break
 
@@ -269,11 +315,7 @@ def train():
                 'scores': scores,
                 'noise_scores': noise_scores,
                 'real_n_poss': input['real_n_poss'],
-                'N_POSS': input['N_POSS'],
-                'margin': args.margin,
-                'kl_coef': args.kl_coef,
-                'noise_prior': args.noise_prior
-                })
+                'N_POSS': input['N_POSS']})
 
             loss.backward()
             torch.nn.utils.clip_grad_norm_(params, 5)
@@ -329,6 +371,19 @@ def train():
 if __name__ == '__main__':
     if args.mode == 'train':
         train()
+
+    if args.mode == 'eval':
+        if model.config['kl_coef'] > 0:
+            print('*** dev ***')
+            test(dataset.dev)
+            print('*** test ***')
+            test(dataset.test)
+
+        print('===== noise_threshold=0 ====')
+        print('*** dev ***')
+        test(dataset.dev, noise_threshold=1)
+        print('*** test ***')
+        test(dataset.test, noise_threshold=1)
 
     else:
         assert(False)

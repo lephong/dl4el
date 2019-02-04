@@ -1,11 +1,9 @@
 import jrk.el_hyperparams as hp
-from jrk.vocabulary import Vocabulary
 import jrk.utils as utils
 import torch
 from torch.autograd import Variable
 import json
 import random
-from pprint import pprint
 from copy import deepcopy
 
 class ELDataset:
@@ -195,6 +193,8 @@ class NYT_RCV1(ELDataset):
 
                 if (count + 1) % 1000 == 0:
                     print(count // 1000, 'k', end='\r')
+                if (count + 1) > 50000:
+                    break
 
 
         print('load', len(data), 'items')
