@@ -3,7 +3,7 @@ dl4el: A distant learning approach for entity linking
 
 A Python implementation of the approach proposed in
 
-[1] Phong Le and Ivan Titov (2019). [Distant learning for Entity linking with Incorrectness prediction](https://arxiv.org/pdf/anonymous.pdf).
+[1] Phong Le and Ivan Titov (2019). [Distant learning for Entity linking with Noise prediction](https://arxiv.org/pdf/anonymous.pdf).
 
 Written and maintained by Phong Le (lephong.xyz [at] gmail.com)
 
