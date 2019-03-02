@@ -21,13 +21,16 @@ out_path = "data/freebase/el_annotation/el_annotated.json"
 
 if mode == 'test':
     MAX_N_ALL_CANDS = 100
-    text_path = "data/EL/AIDA/testa.txt"
-    ner_path = "data/EL/AIDA/testa.gold_ner.txt"
-    out_path = "data/EL/AIDA/testa.json"
-    #MAX_N_ALL_CANDS = 0
-    #text_path = "data/EL/AIDA/train.txt"
-    #ner_path = "data/EL/AIDA/train.txt"
-    #out_path = "data/EL/AIDA/train.json"
+
+    #sup_train = False
+    #text_path = "data/EL/AIDA/testa.txt"
+    #ner_path = "data/EL/AIDA/testa.gold_ner.txt"
+    #out_path = "data/EL/AIDA/testa.json"
+
+    sup_train = True
+    text_path = "data/EL/AIDA/train.txt"
+    ner_path = "data/EL/AIDA/train.txt"
+    out_path = "data/EL/AIDA/train.json"
 
 print('load ent and word dics')
 voca_ent_path = 'data/freebase/freebase-entity.lst'
@@ -178,9 +181,14 @@ def process_sent(sent, f, sent_ner=None):
                 continue
             item = {'mention': m_loc, 'positives': [], 'negatives': [], 'entity': ent, 'ner': ner}
 
-            if MAX_N_ALL_CANDS > 0:
+            if not sup_train:
                 item['positives'] = run(sent[m_loc[0]:m_loc[1]], ent)
             else:
+                item['negatives'] = run(sent[m_loc[0]:m_loc[1]], ent)
+                try:
+                    item['negatives'].remove(ent)
+                except:
+                    pass
                 item['positives'] = [ent]
             ret['mentions'].append(item)
 

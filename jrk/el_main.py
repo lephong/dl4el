@@ -148,7 +148,7 @@ elif args.mode == 'eval':
         'word_embs': word_embs,
         'pos_embdim': config['pos_embdim'],
         'type_embdim': config['type_embdim'],
-        'ent_embdim': args.ent_embdim,
+        'ent_embdim': config['ent_embdim'],
         'dropout': config['dropout'],
         'en_dim': config['en_dim'],
         'n_types': config['n_types'],
@@ -203,11 +203,15 @@ def test(data=None, noise_threshold=args.noise_threshold):
             n_total += 1
             ner_acc[ner]['total'] += 1
 
+            in_Eplus = ''
             if ent in cn:
                 n_total_or += 1
                 ner_acc[ner]['total_or'] += 1
+                in_Eplus = '*'
 
             if pn > noise_threshold:
+                if data == dataset.test:
+                    print('-1' + in_Eplus, end='\t')
                 continue
             n_total_pred += 1
             ner_acc[ner]['total_pred'] += 1
@@ -223,6 +227,14 @@ def test(data=None, noise_threshold=args.noise_threshold):
                 n_correct_pred_or += 1
                 ner_acc[ner]['correct_pred_or'] += 1
 
+                if data == dataset.test:
+                    print('1' + in_Eplus, end='\t')
+            else:
+                if data == dataset.test:
+                    print('0' + in_Eplus, end='\t')
+
+        if data == dataset.test:
+            print()
         start = end
 
     prec = n_correct_pred / n_total_pred
@@ -261,7 +273,7 @@ def train():
         print('*** test ***')
         test(dataset.test)
 
-    print('===== noise_threshold=0 ====')
+    print('===== noise_threshold=1 ====')
     print('*** dev ***')
     test(dataset.dev, noise_threshold=1)
     print('*** test ***')
@@ -323,11 +335,11 @@ def train():
             loss = loss.data.cpu().item()
 
             # print sentence
-            if False:
+            if False and end < 1001:
                 p_noise = torch.nn.functional.sigmoid(noise_scores)
                 for _i in range(end - start):
                     p_noise_i = p_noise[_i]
-                    if p_noise_i > args.noise_threshold:
+                    if True: #p_noise_i > args.noise_threshold:
                         scores_i = scores[_i][:input['N_POSS']]
                         sent_i = sents[_i]
                         m_loc_i = input['m_loc'][_i]
@@ -347,10 +359,10 @@ def train():
                         best_types = [voca_type.id2word[t] for t in ent2typeId[best_entId]]
                         best_name = [voca_ent_word.id2word[w] for w in ent2nameId[best_entId]]
 
-                        print('------------------ noisy data point ---------------')
+                        print('------------------ data point ---------------')
+                        print(p_noise_i)
                         print(sent_i)
                         print(n_poss_i)
-                        print(p_noise_i)
                         print(best_ent, best_name, best_types, best_score)
 
                         print('CANDS')
@@ -367,12 +379,11 @@ def train():
             total_loss += loss * (end - start)
             start = end
 
-
 if __name__ == '__main__':
     if args.mode == 'train':
         train()
 
-    if args.mode == 'eval':
+    elif args.mode == 'eval':
         if model.config['kl_coef'] > 0:
             print('*** dev ***')
             test(dataset.dev)

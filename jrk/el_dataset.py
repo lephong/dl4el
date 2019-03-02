@@ -50,12 +50,23 @@ class ELDataset:
         targets = []
         ners = []
 
+        input['real_n_negs'] = [len(x[5]) for x in org]
+        input['N_NEGS'] = max(input['real_n_negs'])
+        if input['N_NEGS'] == 0:
+            input['N_NEGS'] = hp.N_NEGS
 
         for item in org:
-            tokens, m_loc, pos_wrt_m, sent, positives, ent, ner = deepcopy(item)
+            tokens, m_loc, pos_wrt_m, sent, positives, negatives, ent, ner = deepcopy(item)
 
             # sampling negative samples
-            negatives = random.sample(self.entIdList, hp.N_NEGS)
+            if hp.SAMPLE_NEGS:
+                negatives = random.sample(self.entIdList, hp.N_NEGS)
+            else:
+                if len(negatives) == 0:
+                    negatives = random.sample(self.entIdList, input['N_NEGS'])
+                else:
+                    negatives = negatives + [negatives[-1]] * (input['N_NEGS'] - len(negatives))
+
             neg_types = [self.triples['ent2typeId'][c] for c in negatives]
 
             pos_types = [self.triples['ent2typeId'][c] for c in positives]
@@ -181,6 +192,7 @@ class NYT_RCV1(ELDataset):
                             [min(i - me + 1, hp.MAX_POS) for i in range(me, len(words))]
 
                     positives = [c for c in ment['positives'] if c in self.triples['ent2typeId']]
+                    negatives = [c for c in ment['negatives'] if c in self.triples['ent2typeId']]
                     if len(positives) == 0:
                         continue
                     if len(positives) > MAX_N_POSS:
@@ -189,7 +201,7 @@ class NYT_RCV1(ELDataset):
                         sorted(tmp, key=lambda x:x[1])
                         positives = [x[0] for x in tmp]
 
-                    data.append((words, (ms, me), pos_wrt_m, sent, positives, ment.get('entity', None), ment.get('ner', 'O')))
+                    data.append((words, (ms, me), pos_wrt_m, sent, positives, negatives, ment.get('entity', None), ment.get('ner', 'O')))
 
                 if (count + 1) % 1000 == 0:
                     print(count // 1000, 'k', end='\r')

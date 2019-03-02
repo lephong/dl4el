@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from jrk.el_hyperparams import MAX_POS, N_NEGS, TYPE_OPT
+from jrk.el_hyperparams import MAX_POS, TYPE_OPT
 from jrk.utils import embedding_3D
 
 class ELEncoder(nn.Module):
@@ -48,6 +48,7 @@ class ELEncoder(nn.Module):
 
     def forward(self, input):
         N_POSS = input['N_POSS']
+        N_NEGS = input['N_NEGS']
         N_CANDS = N_POSS + N_NEGS
 
         batchsize = input['tokens'].shape[0]
