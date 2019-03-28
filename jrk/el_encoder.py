@@ -120,7 +120,10 @@ class ELEncoder(nn.Module):
 
         # masking
         pos_mask = torch.linspace(1, N_POSS, steps=N_POSS).repeat(batchsize, 1).cuda() <= input['real_n_poss'].float().unsqueeze(1).repeat(1, N_POSS)
-        mask = torch.cat([pos_mask, torch.ones(batchsize, N_NEGS).cuda().byte()], dim=1)
+        if N_NEGS > 0:
+            mask = torch.cat([pos_mask, torch.ones(batchsize, N_NEGS).cuda().byte()], dim=1)
+        else:
+            mask = pos_mask
         scores = torch.where(mask, scores, torch.empty(scores.shape).cuda().fill_(-1e10))
 
         # compute noise prob

@@ -32,6 +32,8 @@ parser.add_argument("--margin", type=float, default=0.1)
 parser.add_argument("--kl_coef", type=float, default=5 if not sup_train else 0)
 parser.add_argument("--noise_prior", type=float, default=0.9)
 
+parser.add_argument("--outpath", type=str, default='data/output.json')
+
 data_path = 'data/freebase/el_annotation/el_annotated_170k.json'
 
 if sup_train:

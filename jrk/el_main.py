@@ -1,6 +1,7 @@
 import torch
 import torch.optim as optim
 from jrk.el_dataset import NYT_RCV1
+from jrk.el_re_dataset import ELREDataset
 from jrk.vocabulary import Vocabulary
 import jrk.utils as utils
 from jrk.el import EL
@@ -26,6 +27,8 @@ voca_ent, _ = Vocabulary.load(datadir + '/freebase-entity.lst', normalization=Fa
 voca_ent_word, _ = Vocabulary.load(datadir + '/freebase-word.lst', normalization=True, add_pad_unk=False, lower=True, digit_0=True)
 n_types = voca_type.size()
 
+print('#entities: %d' % voca_ent.size())
+
 
 # load ent2nameId
 print('load ent_names')
@@ -40,6 +43,7 @@ if os.path.exists(this_path + '.pkl'):
     print('load pickle')
     with open(this_path + '.pkl', 'rb') as f:
         ent2typeId = pickle.load(f)
+        print('ent2typeId %d' % len(ent2typeId))
 else:
     ent2typeId = {}
     with open(datadir + '/freebase-type-instance.txt', 'r') as f:
@@ -99,19 +103,37 @@ h2rtId = {}
 
 # load dataset
 print('load dataset')
-dataset = NYT_RCV1(data_path,
-        {
-            'word': voca_word,
-            'type': voca_type,
-            'ent': voca_ent
-        },
-        {
-            'ent2typeId': ent2typeId,
-            'ent2nameId': ent2nameId,
-            'relId': relId,
-            'h2rtId':  h2rtId,
-        },
-        max_len=args.max_len)
+if args.mode in ['train', 'eval']:
+    dataset = NYT_RCV1(data_path,
+            {
+                'word': voca_word,
+                'type': voca_type,
+                'ent': voca_ent
+            },
+            {
+                'ent2typeId': ent2typeId,
+                'ent2nameId': ent2nameId,
+                'relId': relId,
+                'h2rtId':  h2rtId,
+            },
+            max_len=args.max_len)
+elif args.mode == 'el':
+    dataset = ELREDataset({'data': 'data/ds_train.json'},
+            {
+                'word': voca_word,
+                'type': voca_type,
+                'ent': voca_ent
+            },
+            {
+                'ent2typeId': ent2typeId,
+                'ent2nameId': ent2nameId,
+                'relId': relId,
+                'h2rtId':  h2rtId,
+            },
+            max_len=200)
+
+else:
+    raise NotImplementedError
 
 
 # create model
@@ -134,7 +156,7 @@ if args.mode == 'train':
         'noise_prior': args.noise_prior,
         'margin': args.margin,
     })
-elif args.mode == 'eval':
+elif args.mode in ['eval', 'el']:
     print('load model')
     with open(args.model_path + '.config', 'r') as f:
         config = json.load(f)
@@ -379,6 +401,45 @@ def train():
             total_loss += loss * (end - start)
             start = end
 
+
+# for testing
+def el(noise_threshold=args.noise_threshold):
+    data = dataset.data
+    start = 0
+    ret = []
+    while True:
+        if start >= len(data):
+            break
+        if start % int(1e3) == 0:
+            print('el %d mentions' % start, end='\r')
+
+        end = min(start + args.batchsize, len(data))
+        input, cands, items, names = dataset.get_minibatch(data, start, end)
+
+        scores, noise_scores = model(input)
+
+        p_noise = torch.nn.functional.sigmoid(noise_scores).cpu().detach().numpy()
+        scores = scores.cpu().detach().numpy()
+
+        real_n_poss = input['real_n_poss'].cpu().numpy()
+        for j in range(start, end):
+            j = j - start
+            item = items[j]
+            name = names[j]
+            poss_j = cands[j][:real_n_poss[j]]
+            scores_j = scores[j][:real_n_poss[j]]
+            item[name + 'positives'] = [(voca_ent.id2word[c], float(s)) for c, s in zip(poss_j, scores_j)]
+            item[name + 'p_noise'] = float(p_noise[j])
+            item[name] = True
+            if item['subj_'] and item['obj_']:
+                ret.append(item)
+
+        start = end
+
+    print()
+    return ret
+
+
 if __name__ == '__main__':
     if args.mode == 'train':
         train()
@@ -395,6 +456,12 @@ if __name__ == '__main__':
         test(dataset.dev, noise_threshold=1)
         print('*** test ***')
         test(dataset.test, noise_threshold=1)
+
+    elif args.mode == 'el':
+        items = el()
+        with open(args.outpath, 'w') as f:
+            for item in items:
+                f.write(json.dumps(item) + '\n')
 
     else:
         assert(False)
