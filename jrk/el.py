@@ -51,6 +51,11 @@ class EL(nn.Module):
         scores, noise_scores = self.encoder(input)
         return scores, noise_scores
 
+    def compute_logprobs(self, scores, noise_scores):
+        noise_logprobs = torch.nn.functional.logsigmoid(noise_scores)
+        notnoise_ent_logprobs = torch.nn.functional.log_softmax(scores, dim=1) + torch.log(1 - torch.exp(noise_logprobs) + 1e-10)
+        return notnoise_ent_logprobs, noise_logprobs
+
     def compute_loss(self, input, sup=False):
         if not sup:
             scores, noise_scores, = input['scores'], input['noise_scores']

@@ -234,7 +234,7 @@ def test(data=None, noise_threshold=args.noise_threshold):
 
             if pn > noise_threshold:
                 if data == dataset.test:
-                    print('-1' + in_Eplus, end='\t')
+                    pass #print('-1' + in_Eplus, end='\t')
                 continue
             n_total_pred += 1
             ner_acc[ner]['total_pred'] += 1
@@ -251,29 +251,29 @@ def test(data=None, noise_threshold=args.noise_threshold):
                 ner_acc[ner]['correct_pred_or'] += 1
 
                 if data == dataset.test:
-                    print('1' + in_Eplus, end='\t')
+                    pass #print('1' + in_Eplus, end='\t')
             else:
                 if data == dataset.test:
-                    print('0' + in_Eplus, end='\t')
+                    pass #print('0' + in_Eplus, end='\t')
 
         if data == dataset.test:
-            print()
+            pass #print()
         start = end
 
-    prec = n_correct_pred / n_total_pred
-    rec = n_correct_pred / n_total
     try:
+        prec = n_correct_pred / n_total_pred
+        rec = n_correct_pred / n_total
         f1 = 2 * (prec * rec) / (prec + rec)
     except:
-        f1 = 0
+        pred = rec = f1 = 0
     print('all -- prec: %.2f\trec: %.2f\tf1: %.2f' % (prec * 100, rec * 100, f1 * 100))
 
-    prec = n_correct_pred_or / n_total_pred_or
-    rec = n_correct_pred_or / n_total_or
     try:
+        prec = n_correct_pred_or / n_total_pred_or
+        rec = n_correct_pred_or / n_total_or
         f1 = 2 * (prec * rec) / (prec + rec)
     except:
-        f1 = 0
+        prec = rec = f1 = 0
     print('in E+', n_total_or / n_total * 100)
     print('in E+ -- prec: %.2f\trec: %.2f\tf1: %.2f' % (prec * 100, rec * 100, f1 * 100))
 
@@ -419,7 +419,6 @@ def el(noise_threshold=args.noise_threshold):
         input, cands, items, names = dataset.get_minibatch(data, start, end)
 
         scores, noise_scores = model(input)
-
         p_noise = torch.nn.functional.sigmoid(noise_scores).cpu().detach().numpy()
         scores = scores.cpu().detach().numpy()
 
