@@ -41,7 +41,7 @@ class ELDataset:
                 'tokens': [], 'masks': [], 'm_loc': [], 'pos_wrt_m': [],
                 'nb_types': [], 'nb_type_ids': [], 'nb_n_types': [],
                 'nb_rs': [], 'cand_n_nb': [], 'cand_nb_ids': [],
-                'real_n_poss': [],
+                'real_n_poss': []
                 }
         sentence = []
         candidates = []
@@ -85,7 +85,14 @@ class ELDataset:
             input['nb_rs'].extend([[self.triples['relId']['self']] for t in cand_types])
             candidates.append(positives + negatives)
             sentence.append(sent)
-            targets.append(ent)
+            if data != self.train:
+                targets.append(ent)
+            else:
+                try:
+                    _id = positives.index(ent)
+                except:
+                    _id = input['N_POSS']   # this datapoint is noisy
+                targets.append(_id)
             ners.append(ner)
 
         # get neighbour
@@ -140,7 +147,8 @@ class ELDataset:
 class NYT_RCV1(ELDataset):
     def __init__(self, data_path, vocas, triples, max_len=100):
         data_path = {
-                'train': data_path,
+                #'train': data_path,
+                'train': 'data/EL/AIDA/train.json',
                 'dev': 'data/EL/AIDA/testa.json',
                 'test': 'data/EL/AIDA/testb.json'
                 }

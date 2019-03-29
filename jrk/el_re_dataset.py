@@ -112,8 +112,8 @@ class ELREDataset:
             for i, line in enumerate(f):
                 if i % int(1e3) == 0:
                     print('load %d items from json' % i, end='\r')
-                if i > 1e5:
-                    break
+                #if i > 1e5:
+                #    break
                 line = line.strip()
                 data.append(json.loads(line))
 

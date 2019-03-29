@@ -1,3 +1,4 @@
+from torch.autograd import Variable
 import torch
 import torch.optim as optim
 from jrk.el_dataset import NYT_RCV1
@@ -276,8 +277,8 @@ def test(data=None, noise_threshold=args.noise_threshold):
     print('in E+', n_total_or / n_total * 100)
     print('in E+ -- prec: %.2f\trec: %.2f\tf1: %.2f' % (prec * 100, rec * 100, f1 * 100))
 
-    print('ner')
-    print(ner_acc)
+    #print('ner')
+    #print(ner_acc)
     return prec, rec, f1
 
 
@@ -341,7 +342,7 @@ def train():
                 break
 
             end = min(start + args.batchsize, len(data))
-            input, sents, cands, _, _ = dataset.get_minibatch(data, start, end)
+            input, sents, cands, targets, _ = dataset.get_minibatch(data, start, end)
 
             optimizer.zero_grad()
             scores, noise_scores = model(input)
@@ -349,7 +350,8 @@ def train():
                 'scores': scores,
                 'noise_scores': noise_scores,
                 'real_n_poss': input['real_n_poss'],
-                'N_POSS': input['N_POSS']})
+                'N_POSS': input['N_POSS'],
+                'targets': Variable(torch.LongTensor(targets).cuda(), requires_grad=False)}, sup=True)
 
             loss.backward()
             torch.nn.utils.clip_grad_norm_(params, 5)
@@ -428,11 +430,15 @@ def el(noise_threshold=args.noise_threshold):
             name = names[j]
             poss_j = cands[j][:real_n_poss[j]]
             scores_j = scores[j][:real_n_poss[j]]
-            item[name + 'positives'] = [(voca_ent.id2word[c], float(s)) for c, s in zip(poss_j, scores_j)]
-            item[name + 'p_noise'] = float(p_noise[j])
+            item[name+'positives'] = [(voca_ent.id2word[c], float(s)) for c, s in zip(poss_j, scores_j)]
+            item[name+'p_noise'] = float(p_noise[j])
             item[name] = True
-            if item['subj_'] and item['obj_']:
-                ret.append(item)
+            item[name+'ent'] = item[name+'positives'][0]
+            try:
+                if item['subj_'] and item['obj_']:
+                    ret.append(item)
+            except:
+                pass
 
         start = end
 

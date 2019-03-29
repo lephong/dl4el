@@ -16,21 +16,21 @@ MAX_N_NEGS = 10
 ent_path = "data/freebase/freebase-entity.txt"
 triples_path = 'data/freebase/freebase-triples.txt'
 text_path = "../freebase2tacred/data/ner.nyt_rcv1.txt"
-ner_path = "../freebase2tacred/data/ner.nyt_rcv1.txt"
+#ner_path = "../freebase2tacred/data/ner.nyt_rcv1.txt"
 out_path = "data/freebase/el_annotation/el_annotated.json"
 
 if mode == 'test':
     MAX_N_ALL_CANDS = 100
 
-    #sup_train = False
-    #text_path = "data/EL/AIDA/testa.txt"
-    #ner_path = "data/EL/AIDA/testa.gold_ner.txt"
-    #out_path = "data/EL/AIDA/testa.json"
-
-    sup_train = True
+    sup_train = False
     text_path = "data/EL/AIDA/train.txt"
-    ner_path = "data/EL/AIDA/train.txt"
+    #ner_path = "data/EL/AIDA/testb.gold_ner.txt"
     out_path = "data/EL/AIDA/train.json"
+
+    #sup_train = True
+    #text_path = "data/EL/AIDA/train.txt"
+    #ner_path = "data/EL/AIDA/train.txt"
+    #out_path = "data/EL/AIDA/train.json"
 
 print('load ent and word dics')
 voca_ent_path = 'data/freebase/freebase-entity.lst'
@@ -283,20 +283,19 @@ if __name__ == '__main__':
 
     print('process sentences from', text_path)
     with open(text_path, 'r') as fin:
-        with open(ner_path, 'r') as fner:
-            with open(out_path, 'w') as fout:
-                count_saved = 0
-                for i, (line, line_ner) in enumerate(zip(fin, fner)):
-                    if i == 0 or '|||' not in line:
-                        continue
-                    if i % 10 == 0:
-                        print(i, count_saved, end='\r')
-                    if count_saved > 1e8:
-                        break
-                    sent = line.strip()
-                    sent_ner = line_ner.strip()
-                    item = process_sent(sent, fout, sent_ner=line_ner.strip())
-                    if item is not None:
-                        count_saved += 1
+        #with open(ner_path, 'r') as fner:
+        with open(out_path, 'w') as fout:
+            count_saved = 0
+            for i, line  in enumerate(fin):
+                if i == 0 or '|||' not in line:
+                    continue
+                if i % 10 == 0:
+                    print(i, count_saved, end='\r')
+                if count_saved > 1e8:
+                    break
+                sent = line.strip()
+                item = process_sent(sent, fout)
+                if item is not None:
+                    count_saved += 1
 
     print(correct, total)
