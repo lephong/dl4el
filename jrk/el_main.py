@@ -119,7 +119,7 @@ if args.mode in ['train', 'eval']:
             },
             max_len=args.max_len)
 elif args.mode == 'el':
-    dataset = ELREDataset({'data': 'data/ds_train.json'},
+    dataset = ELREDataset({'data': 'data/test.json'},
             {
                 'word': voca_word,
                 'type': voca_type,
@@ -465,7 +465,10 @@ if __name__ == '__main__':
     elif args.mode == 'el':
         items = el()
         with open(args.outpath, 'w') as f:
-            for item in items:
+            for _i, item in enumerate(items + dataset.left_data):
+                if dataset.replace_ent:
+                    item['subj_ent'] = str(_i) + '_h_dump'
+                    item['obj_ent'] = str(_i) + '_t_dump'
                 f.write(json.dumps(item) + '\n')
 
     else:

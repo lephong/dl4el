@@ -122,6 +122,9 @@ class ELREDataset:
 
     def read_data(self, path, format='json', train=True, max_len=200):
         data = []
+        self.left_data = []
+        self.replace_ent = False
+
         print('read file from', path)
         if format == 'json':
             raw_data = self.read_json(path)
@@ -138,8 +141,17 @@ class ELREDataset:
                 words = [self.vocas['word'].get_id(w) for w in org_words]
                 if len(words) > max_len:
                     continue
+
                 ok = True
+                subj_added = False
                 for name in ['subj_', 'obj_']:
+                    item[name+'positives'] = [self.vocas['ent'].get_id(c) for c in item[name+'positives']]
+                    positives = [c for c in item[name+'positives'] if c in self.triples['ent2typeId']]
+
+                    if len(positives) == 0:
+                        ok = False
+                        break
+
                     ms, me = item[name+'start'], item[name+'end'] + 1
                     if len(words) == 0:
                         print(item, name)
@@ -153,34 +165,37 @@ class ELREDataset:
                     try:
                         item[name+'ent'] = self.vocas['ent'].word2id[item[name+'ent']]
                     except:
-                        print('%s not in ent dict' % item[name+'ent'])
-                        ok = False
-                        break
+                        if item[name+'ent'].endswith('dump'):
+                            item[name+'ent'] = item[name+'positives'][0]
+                            self.replace_ent = True
+                        else:
+                            print('%s not in ent dict' % item[name+'ent'])
+                            ok = False
+                            break
 
                     if item[name+'ent'] not in self.triples['ent2typeId']:
-                        #print('%d not in ent2typeId' % item[name+'ent'])
                         ok = False
                         break
 
-
-                    item[name+'positives'] = [self.vocas['ent'].get_id(c) for c in item[name+'positives']]
-                    positives = [c for c in item[name+'positives'] if c in self.triples['ent2typeId']]
                     try:
                         positives.remove(item[name+'ent'])
                     except:
                         pass
                     positives = [item[name+'ent']] + positives
 
-                    if len(positives) == 0:
-                        print('no positives')
-                        ok = False
-                        break
-
                     item[name] = True
                     data.append((words, (ms, me), pos_wrt_m, positives, item, name))
+                    subj_added = (name == 'subj_')
 
                 if not ok:
-                    continue
+                    if subj_added:
+                        del data[-1]
+                    self.left_data.append({
+                        'token': item['token'],
+                        'subj_start': item['subj_start'],
+                        'subj_end': item['subj_end'],
+                        'obj_start': item['obj_start'],
+                        'obj_end': item['obj_end']})
 
                 if (count + 1) % 1000 == 0:
                     print(count // 1000, 'k', end='\r')
