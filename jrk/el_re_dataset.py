@@ -191,11 +191,14 @@ class ELREDataset:
                     if subj_added:
                         del data[-1]
                     self.left_data.append({
+                        'id': item.get('id', str(random.randint(0, 10000000))),
+                        'is_prp': item.get('is_prp', False),
                         'token': item['token'],
                         'subj_start': item['subj_start'],
                         'subj_end': item['subj_end'],
                         'obj_start': item['obj_start'],
-                        'obj_end': item['obj_end']})
+                        'obj_end': item['obj_end'],
+                        'relation': item['relation']})
 
                 if (count + 1) % 1000 == 0:
                     print(count // 1000, 'k', end='\r')

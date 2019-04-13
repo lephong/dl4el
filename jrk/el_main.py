@@ -119,7 +119,7 @@ if args.mode in ['train', 'eval']:
             },
             max_len=args.max_len)
 elif args.mode == 'el':
-    dataset = ELREDataset({'data': 'data/test.json'},
+    dataset = ELREDataset({'data': 'data/dev.plel.json'},
             {
                 'word': voca_word,
                 'type': voca_type,
