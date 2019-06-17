@@ -211,7 +211,7 @@ def test(data=None, noise_threshold=args.noise_threshold):
 
             if pn > noise_threshold:
                 if data == dataset.test:
-                    print('-1' + in_Eplus, end='\t')
+                    pass #print('-1' + in_Eplus, end='\t')
                 continue
             n_total_pred += 1
             ner_acc[ner]['total_pred'] += 1
@@ -228,13 +228,13 @@ def test(data=None, noise_threshold=args.noise_threshold):
                 ner_acc[ner]['correct_pred_or'] += 1
 
                 if data == dataset.test:
-                    print('1' + in_Eplus, end='\t')
+                    pass #print('1' + in_Eplus, end='\t')
             else:
                 if data == dataset.test:
-                    print('0' + in_Eplus, end='\t')
+                    pass #print('0' + in_Eplus, end='\t')
 
         if data == dataset.test:
-            print()
+            pass #print()
         start = end
 
     prec = n_correct_pred / n_total_pred
