@@ -1,9 +1,9 @@
 dl4el: A distant learning approach for entity linking
 ========
 
-A Python implementation of the approach proposed in
+A Python implementation of ACL2019 paper 
 
-[1] Phong Le and Ivan Titov (2019). [Distant learning for Entity linking with Noise prediction](https://arxiv.org/pdf/anonymous.pdf).
+[1] Phong Le and Ivan Titov (2019). [Distant Learning for Entity Linking with Automatic Noise Detection](https://arxiv.org/abs/1905.07189).
 
 Written and maintained by Phong Le (lephong.xyz [at] gmail.com)
 
@@ -14,7 +14,7 @@ Requirements: Python 3.7, Pytorch 0.4, CUDA 8
 ### Usage
 
 The following instruction is for replicating the experiments reported in [1]. 
-Note that training and testing take lots of RAM (about 30GB) because 
+Note that training and testing need lots of RAM (about 30GB) because 
 some files related to Freebase have to be loaded. 
 
 
