@@ -47,6 +47,6 @@ For more options, please have a look at `jrk/el_hyperparams.py`
 
 Execute
 
-    python3 -m jrk.el_main --model eval 
+    python3 -m jrk.el_main --mode eval 
 
 
