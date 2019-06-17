@@ -38,7 +38,8 @@ To train, from the main folder run
 
     python3 -m jrk.el_main
 
-IMPORTANT: if you want to train the model from scratch, you have to remove the current saved model (if exists, by `rm model.*`).
+**IMPORTANT: if you want to train the model from scratch, you have to remove the current saved model (if exists, by `rm model.*`).**
+
 Using a GTX 1080 Ti GPU it will take about 3 hours for 20 epochs. The output is a model saved in two files: 
 `model.config` and `model.state_dict` . 
 
