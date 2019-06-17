@@ -3,7 +3,7 @@ dl4el: A distant learning approach for entity linking
 
 A Python implementation of ACL2019 paper 
 
-[1] Phong Le and Ivan Titov (2019). [Distant Learning for Entity Linking with Automatic Noise Detection](https://arxiv.org/abs/1905.07189).
+[1] Phong Le and Ivan Titov. [Distant Learning for Entity Linking with Automatic Noise Detection](https://arxiv.org/abs/1905.07189). ACL 2019.
 
 Written and maintained by Phong Le (lephong.xyz [at] gmail.com)
 
